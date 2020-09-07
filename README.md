@@ -28,11 +28,11 @@ Gnu Public License v3, see text of the full license in project.
 
 ### A diagrammatic representation of data flow indicating the scripts used in the process. Please see individual scripts for usage and details.
 
-![](data flow diagram/data_flow.jpg)
+![](https://github.com/cornish/pubmed-eponyms/blob/master/data%20flow%20diagram/data_flow.jpg)
 
 ### An example of the term permutations created by permute_terms.py for terms with zero, one, two and three separate names.
 
-![](data flow diagram/permutations.jpg)
+![](https://github.com/cornish/pubmed-eponyms/blob/master/data%20flow%20diagram/permutations.jpg)
 
 ## Configuration file:
 1. `config.ini`
