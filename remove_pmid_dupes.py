@@ -1,7 +1,8 @@
 '''remove_pmid_dupes.py
+Remove duplicates within a base term
 
-
-
+input file : pmid_results.csv
+output files : pmid_results - dupes removed.csv
 
 '''
 

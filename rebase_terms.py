@@ -1,7 +1,10 @@
 '''rebase_terms.py
+Takes a csv with paired person name(s) and test names and standardizes the
+names of the people by eliminating possessives using hyphens to separate
+multiple names.
 
-
-
+input file : 321 chemistry eponyms - split - edits - utf8.csv
+output file : terms_re-base.csv
 
 '''
 

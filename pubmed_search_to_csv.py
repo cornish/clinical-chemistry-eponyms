@@ -1,8 +1,10 @@
 '''pubmed_search_to_csv.py
+Searchs pubmed for the EXACT terms in the input file in the title & abstract
+Returns all the PMIDs identified categorized by base term and permuted term
+Does not remove duplicates within a base term
 
-
-
-
+input file : terms_permuted.csv
+output files : term_results.csv, pmid_results.csv
 '''
 
 __title__ = 'pubmed_search_to_csv.py'

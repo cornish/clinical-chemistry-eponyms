@@ -1,7 +1,17 @@
 '''pubmed_journals_by_year.py
+This script will use the input file to create a list of journal abbreviations
+and a range of years from start_year to end_year. It will then search pubmed
+for each of those journals over the range of years to determine how many
+papers each journal published each year in the range. 
 
+Please note that this script is known to be unstable for unknown reasons, but
+it was designed to be restarted. It will automatically skip any journals that
+are already present in the output file. Apologies for that; it is really not 
+clear why the script occassionally locks up completely. This may be a windows
+issue.
 
-
+input_file: 'pmid_results.csv'
+output_file: 'journal_counts.csv' 
 
 '''
 
@@ -14,6 +24,7 @@ __copyright__ = 'Copyright 2020'
 import os
 import sys
 import csv
+import time
 from collections import defaultdict
 from configparser import ConfigParser
 
@@ -22,9 +33,6 @@ from Bio import Medline
 
 input_file_path = os.path.abspath(r'pmid_results.csv')
 journal_output_file_path = os.path.abspath(r'journal_counts.csv') 
-
-start_year = 1913
-end_year = 2021
 
 def main():
     '''Main function'''
@@ -35,9 +43,9 @@ def main():
     print(config)
     
     # Read the journals to search from the input file
-    journals = read_file(input_file_path)
+    start_year, end_year, journals = read_file(input_file_path)
 
-    # Read the journals we have finsihed with from the output file
+    # Read the journals we have finished with from the output file
     finished = read_progress_from_file(journal_output_file_path)
 
     # remove the finished files from the journals list 
@@ -47,81 +55,105 @@ def main():
     for journal in journals:
         print(f'{journal}')
         result = []
-        for year in range(start_year,end_year+1):
-            search_string = f'''"{journal}" [Journal] AND "{year}"[PPDAT]'''
-            print(f'  {year} : {search_string}')
-            count = search(search_string,config['email'],config['api_key']).get('count')
+        chunk_size = 20
+        # 99% of the journals will be sparsely populated over the range, so
+        # we'll check a range of years first, then get specific years if needed
+        print('='*40)
+        for batch in chunks(range(start_year,end_year+1),chunk_size):
+            years = list(batch)
+            start = min(years)
+            end = max(years)
+            print('-'*40)
+            search_string = f'''"{journal}" [Journal] AND "{start}"[PPDAT]:"{end}"[PPDAT]'''
+            print(f'   {start} - {end}: {search_string}')           
+            count = search(search_string,config['email'],config['api_key'])
             print(f'    Found {count} publications.')
-            result.append(count)
-        write_journal_result(journal,result)
- 
+            if count > 0:
+                for year in years:
+                    search_string = f'''"{journal}" [Journal] AND "{year}"[PPDAT]'''
+                    print(f'  {year} : {search_string}')
+                    count = search(search_string,config['email'],config['api_key'])
+                    print(f'    Found {count} publications.')
+                    result.append(count)
+            else:
+                result.extend([0]*len(years))
+        write_journal_result(journal,result,start_year,end_year)
+
 def search(query, email, api_key=None):
-    '''Use Entrez.esearch to identify all publications in a journal'''
+    '''Use Entrez.esearch to identify all publications in a journal, return count'''
 
     Entrez.email = email
     if api_key:
         Entrez.api_key = api_key
 
     # see https://www.ncbi.nlm.nih.gov/books/NBK25499/#chapter4.ESearch for information on parameters
-    # of note: To retrieve more than 100,000 UIDs, submit multiple esearch requests while incrementing the value of retstart
     print("  Retrieving PMIDs ...")
-    query_result = {
-        'term' : query,
-        'pmids' : [],
-        'query_translation' : None,
-        'quoted_phrase_found' : False,
-        'count' : 0
-    }
-    pmids = []
-    retstart = 0
-    handle = Entrez.esearch(db='pubmed', 
-                            sort='relevance', 
-                            retmax='100000',
-                            retstart=retstart,
-                            retmode='xml',
-                            term=query
-    )
-    results = Entrez.read(handle)
 
-    # populate part of the query_result
-    query_result['query_translation'] = results['QueryTranslation']
-    query_result['count'] = int(results['Count'])
+    while(True):
+        try:
+            retstart = 0
+            handle = Entrez.esearch(db='pubmed', 
+                                    sort='relevance', 
+                                    retmax='100000',
+                                    retstart=retstart,
+                                    retmode='xml',
+                                    term=query
+            )
+            results = Entrez.read(handle)
+            break
+        except KeyboardInterrupt:
+            sys.exit()
+        except:
+            # this will probably work itself out
+            print('  Error occurred, retrying...')
+            time.sleep(1)
 
-    # if the quoted phrase isn't found we get whacko results
-    if quoted_phrase_found(results):
-        pmids.extend(results['IdList'])
-        query_result['quoted_phrase_found'] = True
-    else:
-        query_result['quoted_phrase_found'] = False
-        print("    The quoted phrase wasn't found (0 results).")
+    count = int(results['Count'])
 
     print("    Done.")
-    query_result['pmids'] = pmids
-    return query_result
+    return count
 
-def quoted_phrase_found(results):
-    '''If the quoted phrase was found return True'''
-    if 'WarningList' in results:
-        if 'QuotedPhraseNotFound' in results['WarningList']:
-            return False
-        else:
-            return True
-    else:
-        return True
+def chunks(l, n): 
+    '''Generator for list l as chunks of size n'''
+    for i in range(0, len(l), n):  
+        yield l[i:i + n] 
 
 def read_file(file_path):
     '''Read the input file and return a list of unique journals, sorted''' 
+    journals = []
+    start_year = 3000
+    end_year = 0
     with open(file_path,'r') as f:
         reader = csv.DictReader(f)
-        return sorted(list(set([row['TA'] for row in reader if row['TA'] != ''])))
+        for row in reader:
+            if row['TA'] != '':
+                journals.append(row['TA'])
+            if is_int(row['Year']):
+                start_year = min(start_year,int(row['Year']))
+                end_year = max(end_year,int(row['Year']))
+
+    # make the list unique and sort alphabetically (case insentive)
+    journals = sorted(list(set(journals)), key=str.casefold)
+    return start_year, end_year, journals
+
+def is_int(val):
+    '''Return True if the string can be convereted to an int'''
+    try:
+        num = int(val)
+    except ValueError:
+        return False
+    return True
 
 def read_progress_from_file(file_path):
-    '''Read the output file and return a list of journals that are done''' 
-    with open(file_path,'r') as f:
-        reader = csv.DictReader(f)
-        return [row['journal'] for row in reader] 
+    '''Read the output file and return a list of journals that are done'''
+    if os.path.isfile(file_path):
+        with open(file_path,'r') as f:
+            reader = csv.DictReader(f)
+            return [row['journal'] for row in reader] 
+    else: 
+        return []
 
-def write_journal_result(journal,result):
+def write_journal_result(journal,result,start_year,end_year):
     '''Append our results to the output file'''
     file_exists = os.path.isfile(journal_output_file_path) # if it doesn't exist, we are creating it and need to write a header
 

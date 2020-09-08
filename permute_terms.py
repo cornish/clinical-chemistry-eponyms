@@ -1,7 +1,10 @@
 '''permute_terms.py
+Takes a csv with paired standardized (re-based) person name(s) and test names 
+and creates a series of variations (permutations) that attempt to include all 
+common equivalents for how eponyms might be written in the literature.
 
-
-
+input file : terms_re-base.csv
+output file : terms_permuted.csv
 
 '''
 
