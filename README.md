@@ -7,7 +7,7 @@ This project serves to deposit the code used in the manuscript indicated below. 
 ## Citing
 In addition to citing this GitHub repository (https://github.com/cornish/pubmed-eponyms), please cite the following paper:
 
-** reference to be added **
+- Eponyms in Clinical Chemistry. Larry J Kricka1, Toby C Cornish, and Jason Y Park, In preparation
 
 
 ## License
