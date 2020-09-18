@@ -3,7 +3,7 @@ Takes a csv with paired person name(s) and test names and standardizes the
 names of the people by eliminating possessives using hyphens to separate
 multiple names.
 
-input file : 321 chemistry eponyms - split - edits - utf8.csv
+input file : 323 chemistry eponyms - split - edits - utf8.csv
 output file : terms_re-base.csv
 
 '''
@@ -19,7 +19,7 @@ import sys
 import csv
 import re
 
-input_file_path = os.path.abspath(r'321 chemistry eponyms - split - edits - utf8.csv')
+input_file_path = os.path.abspath(r'323 chemistry eponyms - split - edits - utf8.csv')
 output_file_path = os.path.abspath(r'terms_re-base.csv') 
 
 def main():

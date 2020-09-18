@@ -41,9 +41,9 @@ Gnu Public License v3, see text of the full license in project.
    - See [here](https://ncbiinsights.ncbi.nlm.nih.gov/2017/11/02/new-api-keys-for-the-e-utilities/) for more information about API keys for NCBI's E-utilities
 
 ## Data files:
-1. `321 chemistry eponyms.txt`
+1. `323 chemistry eponyms.txt`
    - This is the original list of terms collected from textbooks and elsewhere 
-2. `321 chemistry eponyms - split - edits - utf8.csv`
+2. `323 chemistry eponyms - split - edits - utf8.csv`
    - This is the original list with terms split into Name(s) and Test fields; multiple name eponyms separated by spaces were converted to separation by hyphens manually to distinguish them from last names with internal spaces (i.e. "Van Slyke")
    - Input to `rebase_terms.py`
 3. `data/terms_re-base.csv`
